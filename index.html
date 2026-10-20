@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Passport: Countries, Nationalities & Verb To Be</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#030712',
+                            card: '#0f172a',
+                            border: '#1e293b',
+                            accent: '#6366f1',
+                            neonCyan: '#06b6d4',
+                            neonGreen: '#10b981',
+                            neonRed: '#f43f5e',
+                            neonYellow: '#eab308'
+                        }
+                    },
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        jakarta: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.15) 0px, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.15) 0px, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0px, transparent 60%);
+            background-attachment: fixed;
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+        }
+
+        .draggable-badge {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .draggable-badge:active {
+            cursor: grabbing;
+            transform: scale(1.08) rotate(-2deg);
+        }
+
+        .draggable-badge.selected-tap {
+            ring: 4px;
+            ring-color: #06b6d4;
+            background-color: #4f46e5;
+            transform: scale(1.05);
+        }
+
+        .drop-zone {
+            transition: all 0.25s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.2);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .drop-zone.correct-drop {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.25);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .drop-zone.wrong-drop {
+            border-color: #f43f5e;
+            background: rgba(244, 63, 94, 0.25);
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .speech-bubble {
+            position: relative;
+            background: #4f46e5;
+            border-radius: .8em;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-right-color: #4f46e5;
+            border-left: 0;
+            margin-top: -8px;
+            margin-left: -8px;
+        }
+
+        /* SVG Flag Crisp Styling */
+        .svg-flag-box {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-center: center;
+            overflow: hidden;
+            border-radius: 0.75rem;
+        }
+        .svg-flag-box svg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="w-full border-b border-gray-800 bg-brand-dark/90 backdrop-blur-xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-indigo-600 via-cyan-500 to-emerald-400 p-2.5 rounded-2xl shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-passport text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-outfit text-xl font-black tracking-wider text-white flex items-center gap-2">
+                        GLOBAL PASSPORT <span class="text-xs px-2 py-0.5 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-full font-bold">HD FLAGS</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">Countries, Cultural Symbols & Verb "To Be"</p>
+                </div>
+            </div>
+
+            <!-- Mode Switcher -->
+            <div class="flex items-center gap-2 bg-gray-900/90 p-1.5 rounded-2xl border border-gray-800">
+                <button id="btn-game1" onclick="switchGame(1)" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-600/30">
+                    <i class="fa-solid fa-flag mr-1.5"></i> Game 1: Flag Match
+                </button>
+                <button id="btn-game2" onclick="switchGame(2)" class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-800">
+                    <i class="fa-solid fa-earth-americas mr-1.5"></i> Game 2: Passport Quiz
+                </button>
+            </div>
+
+            <!-- Audio Controller -->
+            <button id="audio-toggle" onclick="toggleAudio()" class="w-10 h-10 rounded-2xl bg-gray-900 hover:bg-gray-800 border border-gray-800 flex items-center justify-center text-cyan-400 transition-all shadow-md">
+                <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+        <!-- ==================== GAME 1: HIGH-RES SVG VECTOR FLAG MATCHING ==================== -->
+        <section id="game1-container" class="space-y-6">
+            
+            <!-- Top Banner -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-l-cyan-500">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-xs font-extrabold uppercase tracking-widest mb-2">
+                        <i class="fa-solid fa-vector-square"></i> Vector Flag Match
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-black font-outfit text-white">Drag & Drop Country Badges</h2>
+                    <p class="text-gray-400 text-sm mt-1">Match each country badge from the top to its corresponding clean vector flag below.</p>
+                </div>
+
+                <div class="flex items-center gap-4 bg-gray-950/80 px-6 py-3 rounded-2xl border border-gray-800">
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-black block">Matched</span>
+                        <span id="g1-score" class="text-2xl font-black font-outfit text-cyan-400">0 / 8</span>
+                    </div>
+                    <div class="h-8 w-px bg-gray-800"></div>
+                    <button onclick="resetGame1()" class="px-3.5 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-xl font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-right text-cyan-400"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Draggable Country Names Pool -->
+            <div class="glass-card p-5 rounded-3xl border-2 border-indigo-500/20 shadow-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-hand-pointer text-indigo-400"></i> Country Badges (Drag or Tap to Select):
+                    </h3>
+                    <span class="text-[11px] text-indigo-300/80 italic">Touch screens: Tap badge then tap target drop box!</span>
+                </div>
+                <div id="badges-pool" class="flex flex-wrap gap-3 min-h-[60px] items-center p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
+                    <!-- Badges dynamically rendered -->
+                </div>
+            </div>
+
+            <!-- HD Vector Flags Grid -->
+            <div id="flags-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- 8 Clean Vector Flag Cards rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ==================== GAME 2: CULTURAL PASSPORT QUIZ ==================== -->
+        <section id="game2-container" class="hidden space-y-6">
+            
+            <!-- Quiz Header -->
+            <div class="glass-card p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 border-l-4 border-l-emerald-500">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-extrabold uppercase tracking-widest mb-2">
+                        <i class="fa-solid fa-passport"></i> Customs Checkpoint
+                    </span>
+                    <h2 class="text-2xl md:text-3xl font-black font-outfit text-white">Cultural Identity & Verb "To Be"</h2>
+                    <p class="text-gray-400 text-sm mt-1">Examine the traveler's photo, native greeting, and emblem. Choose your answer and click 'Siguiente / Next' when ready!</p>
+                </div>
+
+                <div class="flex items-center gap-6 bg-gray-950/80 px-6 py-3 rounded-2xl border border-gray-800">
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-black block">Progress</span>
+                        <span id="g2-progress" class="text-2xl font-black font-outfit text-emerald-400">1 / 8</span>
+                    </div>
+                    <div class="h-8 w-px bg-gray-800"></div>
+                    <div class="text-center">
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-black block">Score</span>
+                        <span id="g2-score" class="text-2xl font-black font-outfit text-cyan-400">0 pts</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Main Viewport -->
+            <div class="glass-card p-6 md:p-8 rounded-3xl relative overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    
+                    <!-- Left Column: Traveler Card & Cultural Symbol -->
+                    <div class="lg:col-span-5 flex flex-col items-center">
+                        <div class="relative w-full max-w-xs rounded-3xl overflow-hidden border-2 border-indigo-500/30 bg-gradient-to-b from-slate-900 to-gray-950 p-3 shadow-2xl">
+                            
+                            <!-- Native Greeting Speech Bubble -->
+                            <div class="absolute top-4 left-4 z-20">
+                                <div id="quiz-greeting" class="speech-bubble text-white font-extrabold text-xs px-3 py-1.5 shadow-lg border border-white/20">
+                                    ¡Hola!
+                                </div>
+                            </div>
+
+                            <!-- Flag Badge -->
+                            <div class="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                                <div id="quiz-flag-svg-box" class="w-6 h-4 overflow-hidden rounded"></div>
+                                <span id="quiz-country-code" class="text-xs font-black text-white">MEX</span>
+                            </div>
+
+                            <!-- Avatar Image -->
+                            <div class="relative overflow-hidden rounded-2xl h-64 border border-gray-800">
+                                <img id="quiz-avatar" src="" alt="Traveler" class="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105">
+                            </div>
+
+                            <!-- Cultural Symbol Badge -->
+                            <div class="mt-3 bg-gray-900/90 p-3 rounded-xl border border-gray-800 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg shrink-0">
+                                    <i id="quiz-symbol-icon" class="fa-solid fa-landmark"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <span class="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">Cultural Emblem</span>
+                                    <p id="quiz-symbol-desc" class="text-xs font-bold text-gray-200 truncate">Sombrero & Chichen Itza</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-2 text-center">
+                                <h4 id="quiz-name" class="font-outfit font-black text-lg text-white">Mateo Hernández</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Interactive Quiz Question -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <div class="bg-gray-950/70 p-6 rounded-2xl border border-gray-800">
+                            <span class="text-xs font-black text-cyan-400 uppercase tracking-widest block mb-1">
+                                <i class="fa-solid fa-circle-question mr-1"></i> Grammar & Identity Question
+                            </span>
+                            <h3 id="quiz-question" class="text-xl md:text-2xl font-black font-outfit text-white">
+                                Is he from Mexico?
+                            </h3>
+                        </div>
+
+                        <!-- Options Container -->
+                        <div id="quiz-options" class="grid grid-cols-1 gap-3">
+                            <!-- Dynamic Option Buttons -->
+                        </div>
+
+                        <!-- Feedback Box -->
+                        <div id="quiz-feedback" class="hidden p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300">
+                        </div>
+
+                        <!-- EXPLICIT NEXT BUTTON (Requirement) -->
+                        <div id="quiz-next-container" class="hidden pt-2">
+                            <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="w-full py-4 bg-gradient-to-r from-emerald-500 via-cyan-500 to-indigo-600 hover:opacity-90 text-white font-black text-base rounded-2xl shadow-xl shadow-cyan-500/20 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                <span>Siguiente Pregunta / Next Question</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== COMPLETION MODAL ==================== -->
+        <div id="completion-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+            <div class="glass-card max-w-md w-full p-8 rounded-3xl text-center space-y-6 border-2 border-cyan-500/40 shadow-2xl">
+                <div class="w-20 h-20 bg-gradient-to-tr from-cyan-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/30">
+                    <i class="fa-solid fa-trophy text-4xl text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black font-outfit text-white">Passport Approved!</h3>
+                    <p class="text-gray-300 mt-2 text-sm">You have completed all national flags and grammar questions!</p>
+                </div>
+
+                <div class="bg-gray-950/80 p-4 rounded-2xl border border-gray-800 flex justify-around">
+                    <div>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-black block">Total Score</span>
+                        <span id="final-score" class="text-3xl font-black font-outfit text-emerald-400">100 pts</span>
+                    </div>
+                    <div class="h-10 w-px bg-gray-800"></div>
+                    <div>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-black block">Accuracy</span>
+                        <span id="final-accuracy" class="text-3xl font-black font-outfit text-cyan-400">100%</span>
+                    </div>
+                </div>
+
+                <button onclick="restartAll()" class="w-full py-4 bg-gradient-to-r from-indigo-600 via-cyan-600 to-emerald-500 hover:opacity-90 text-white font-black rounded-2xl shadow-xl transition transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Play Again
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full border-t border-gray-900 py-4 text-center text-xs text-gray-500">
+        <p>Global Passport English Hub • Ultra Clean Vector Flags & Grammar Practice</p>
+    </footer>
+
+    <!-- JAVASCRIPT CODE -->
+    <script>
+        /* ==================== CLEAN VECTOR SVG FLAGS DEFINITIONS ==================== */
+        // Explicit pure SVG markup to guarantee PERFECT proportions (Colombia 50/25/25, Ecuador coat of arms, etc.)
+        const SVG_FLAGS = {
+            colombia: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="900" height="300" fill="#FCD116"/>
+                <rect y="300" width="900" height="150" fill="#003893"/>
+                <rect y="450" width="900" height="150" fill="#CE1126"/>
+            </svg>`,
+            ecuador: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="900" height="300" fill="#FFD100"/>
+                <rect y="300" width="900" height="150" fill="#0072CE"/>
+                <rect y="450" width="900" height="150" fill="#ED1C24"/>
+                <!-- Coat of Arms Center Emblem -->
+                <g transform="translate(450, 300) scale(0.65)">
+                    <ellipse cx="0" cy="0" rx="75" ry="85" fill="#87CEEB" stroke="#DAA520" stroke-width="8"/>
+                    <path d="M-60 10 Q0 -30 60 10 L45 50 Q0 60 -45 50 Z" fill="#228B22"/>
+                    <circle cx="0" cy="-40" r="14" fill="#FFD700"/>
+                    <path d="M-30 -80 Q0 -110 30 -80 Q0 -60 -30 -80 Z" fill="#8B4513"/>
+                </g>
+            </svg>`,
+            mexico: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="300" height="600" fill="#006847"/>
+                <rect x="300" width="300" height="600" fill="#FFFFFF"/>
+                <rect x="600" width="300" height="600" fill="#CE1126"/>
+                <circle cx="450" cy="300" r="45" fill="#8B5A2B"/>
+                <path d="M435 280 Q450 250 465 280 Q450 310 435 280 Z" fill="#006847"/>
+            </svg>`,
+            usa: `<svg viewBox="0 0 740 390" xmlns="http://www.w3.org/2000/svg">
+                <rect width="740" height="390" fill="#BB133E"/>
+                <path d="M0 30h740M0 90h740M0 150h740M0 210h740M0 270h740M0 330h740" stroke="#FFF" stroke-width="30"/>
+                <rect width="296" height="210" fill="#002147"/>
+                <g fill="#FFF">
+                    <circle cx="30" cy="20" r="6"/><circle cx="80" cy="20" r="6"/><circle cx="130" cy="20" r="6"/><circle cx="180" cy="20" r="6"/><circle cx="230" cy="20" r="6"/>
+                    <circle cx="55" cy="50" r="6"/><circle cx="105" cy="50" r="6"/><circle cx="155" cy="50" r="6"/><circle cx="205" cy="50" r="6"/>
+                    <circle cx="30" cy="80" r="6"/><circle cx="80" cy="80" r="6"/><circle cx="130" cy="80" r="6"/><circle cx="180" cy="80" r="6"/><circle cx="230" cy="80" r="6"/>
+                    <circle cx="55" cy="110" r="6"/><circle cx="105" cy="110" r="6"/><circle cx="155" cy="110" r="6"/><circle cx="205" cy="110" r="6"/>
+                    <circle cx="30" cy="140" r="6"/><circle cx="80" cy="140" r="6"/><circle cx="130" cy="140" r="6"/><circle cx="180" cy="140" r="6"/><circle cx="230" cy="140" r="6"/>
+                </g>
+            </svg>`,
+            france: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="300" height="600" fill="#002395"/>
+                <rect x="300" width="300" height="600" fill="#FFFFFF"/>
+                <rect x="600" width="300" height="600" fill="#ED2939"/>
+            </svg>`,
+            italy: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="300" height="600" fill="#009246"/>
+                <rect x="300" width="300" height="600" fill="#FFFFFF"/>
+                <rect x="600" width="300" height="600" fill="#CE2B37"/>
+            </svg>`,
+            germany: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="900" height="200" fill="#000000"/>
+                <rect y="200" width="900" height="200" fill="#FF0000"/>
+                <rect y="400" width="900" height="200" fill="#FFCC00"/>
+            </svg>`,
+            russia: `<svg viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+                <rect width="900" height="200" fill="#FFFFFF"/>
+                <rect y="200" width="900" height="200" fill="#0039A6"/>
+                <rect y="400" width="900" height="200" fill="#D52B1E"/>
+            </svg>`
+        };
+
+        const COUNTRIES = [
+            { id: 'mexico', name: 'Mexico', nationality: 'Mexican', code: 'MEX' },
+            { id: 'colombia', name: 'Colombia', nationality: 'Colombian', code: 'COL' },
+            { id: 'ecuador', name: 'Ecuador', nationality: 'Ecuadorian', code: 'ECU' },
+            { id: 'usa', name: 'United States', nationality: 'American', code: 'USA' },
+            { id: 'france', name: 'France', nationality: 'French', code: 'FRA' },
+            { id: 'italy', name: 'Italy', nationality: 'Italian', code: 'ITA' },
+            { id: 'germany', name: 'Germany', nationality: 'German', code: 'DEU' },
+            { id: 'russia', name: 'Russia', nationality: 'Russian', code: 'RUS' }
+        ];
+
+        const QUIZ_QUESTIONS = [
+            {
+                id: 'mexico',
+                name: 'Mateo Hernández',
+                country: 'Mexico',
+                nationality: 'Mexican',
+                greeting: '¡Hola!',
+                code: 'MEX',
+                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-hat-cowboy',
+                symbolDesc: 'Sombrero & Chichen Itza',
+                question: 'Is Mateo Mexican?',
+                options: [
+                    { text: 'Yes, he is.', correct: true },
+                    { text: 'No, he is not.', correct: false },
+                    { text: 'Yes, she is Mexican.', correct: false }
+                ],
+                explanation: '¡Excelente! Mateo is male ("he"), and he is Mexican.'
+            },
+            {
+                id: 'colombia',
+                name: 'Camila Restrepo',
+                country: 'Colombia',
+                nationality: 'Colombian',
+                greeting: '¡Hola!',
+                code: 'COL',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-mug-hot',
+                symbolDesc: 'Coffee & Sombrero Vueltiao',
+                question: 'Where is Camila from?',
+                options: [
+                    { text: 'She is from Colombia.', correct: true },
+                    { text: 'He is from Colombia.', correct: false },
+                    { text: 'She is from Colombian.', correct: false }
+                ],
+                explanation: 'Correct! "From" must be followed by the country name (Colombia).'
+            },
+            {
+                id: 'ecuador',
+                name: 'Doménica Lasso',
+                country: 'Ecuador',
+                nationality: 'Ecuadorian',
+                greeting: '¡Hola!',
+                code: 'ECU',
+                avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-mountain-sun',
+                symbolDesc: 'Middle of the World Monument',
+                question: 'Is Doménica from Peru?',
+                options: [
+                    { text: 'No, she isn\'t. She is from Ecuador.', correct: true },
+                    { text: 'Yes, she is.', correct: false },
+                    { text: 'No, he isn\'t Ecuadorian.', correct: false }
+                ],
+                explanation: 'Incorrect option rejected. Look at the coat of arms flag! Doménica is from Ecuador, so she is Ecuadorian.'
+            },
+            {
+                id: 'russia',
+                name: 'Dmitry Volkov',
+                country: 'Russia',
+                nationality: 'Russian',
+                greeting: 'Привет!',
+                code: 'RUS',
+                avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-cubes-stacked',
+                symbolDesc: 'Matryoshka Nesting Dolls',
+                question: 'What is Dmitry\'s nationality?',
+                options: [
+                    { text: 'He is Russian.', correct: true },
+                    { text: 'He is Russia.', correct: false },
+                    { text: 'She is Russian.', correct: false }
+                ],
+                explanation: 'Great job! Dmitry is Russian.'
+            },
+            {
+                id: 'france',
+                name: 'Sophie Dubois',
+                country: 'France',
+                nationality: 'French',
+                greeting: 'Bonjour!',
+                code: 'FRA',
+                avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-tower-observation',
+                symbolDesc: 'Eiffel Tower & Croissants',
+                question: 'Is Sophie French?',
+                options: [
+                    { text: 'Yes, she is.', correct: true },
+                    { text: 'No, she is French.', correct: false },
+                    { text: 'Yes, he is French.', correct: false }
+                ],
+                explanation: 'Exact! Sophie is female ("she") and she is French.'
+            },
+            {
+                id: 'germany',
+                name: 'Luka Müller',
+                country: 'Germany',
+                nationality: 'German',
+                greeting: 'Hallo!',
+                code: 'DEU',
+                avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-monument',
+                symbolDesc: 'Brandenburg Gate',
+                question: 'Is Luka from Germany?',
+                options: [
+                    { text: 'Yes, he is German.', correct: true },
+                    { text: 'No, he is from Germany.', correct: false },
+                    { text: 'Yes, she is German.', correct: false }
+                ],
+                explanation: 'Wunderbar! Luka is from Germany, so he is German.'
+            },
+            {
+                id: 'italy',
+                name: 'Marco Rossi',
+                country: 'Italy',
+                nationality: 'Italian',
+                greeting: 'Ciao!',
+                code: 'ITA',
+                avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-pizza-slice',
+                symbolDesc: 'Colosseum & Pizza',
+                question: 'Select the correct sentence for Marco:',
+                options: [
+                    { text: 'Marco is Italian.', correct: true },
+                    { text: 'Marco are Italian.', correct: false },
+                    { text: 'Marco am Italian.', correct: false }
+                ],
+                explanation: 'Bellissimo! "Marco" requires the third-person verb form "is".'
+            },
+            {
+                id: 'usa',
+                name: 'Ethan Miller',
+                country: 'United States',
+                nationality: 'American',
+                greeting: 'Hello!',
+                code: 'USA',
+                avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80',
+                symbolIcon: 'fa-statue-of-liberty',
+                symbolDesc: 'Statue of Liberty',
+                question: 'Is Ethan from the United States?',
+                options: [
+                    { text: 'Yes, he is American.', correct: true },
+                    { text: 'No, he is from USA.', correct: false },
+                    { text: 'Yes, she is American.', correct: false }
+                ],
+                explanation: 'Perfect! Ethan is American.'
+            }
+        ];
+
+        /* ==================== SOUND SYNTHESIS ENGINE ==================== */
+        let audioEnabled = true;
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') ctx.resume();
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                const now = ctx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.16);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'pickup') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(350, now);
+                    osc.frequency.exponentialRampToValueAtTime(700, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'complete') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                }
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audio-icon');
+            icon.className = audioEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-gray-500';
+        }
+
+        /* ==================== GAME STATES ==================== */
+        let game1Matched = 0;
+        let selectedBadgeId = null; 
+        let game2Idx = 0;
+        let game2Score = 0;
+
+        function switchGame(num) {
+            const container1 = document.getElementById('game1-container');
+            const container2 = document.getElementById('game2-container');
+            const btn1 = document.getElementById('btn-game1');
+            const btn2 = document.getElementById('btn-game2');
+
+            if (num === 1) {
+                container1.classList.remove('hidden');
+                container2.classList.add('hidden');
+                btn1.className = 'px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-600/30';
+                btn2.className = 'px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-800';
+            } else {
+                container1.classList.add('hidden');
+                container2.classList.remove('hidden');
+                btn2.className = 'px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-600/30';
+                btn1.className = 'px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all duration-300 text-gray-400 hover:text-white hover:bg-gray-800';
+            }
+            playSound('pickup');
+        }
+
+        /* ==================== GAME 1 LOGIC ==================== */
+        function initGame1() {
+            game1Matched = 0;
+            selectedBadgeId = null;
+            document.getElementById('g1-score').innerText = `0 / ${COUNTRIES.length}`;
+
+            const pool = document.getElementById('badges-pool');
+            const grid = document.getElementById('flags-grid');
+
+            pool.innerHTML = '';
+            grid.innerHTML = '';
+
+            // Shuffle Badges
+            const shuffled = [...COUNTRIES].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(item => {
+                const badge = document.createElement('div');
+                badge.id = `badge-${item.id}`;
+                badge.draggable = true;
+                badge.className = 'draggable-badge bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-xs md:text-sm px-4 py-2.5 rounded-xl border border-indigo-400/30 shadow-lg flex items-center gap-2';
+                badge.innerHTML = `<i class="fa-solid fa-location-dot text-cyan-300 text-xs"></i> ${item.name}`;
+
+                // Drag Events
+                badge.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', item.id);
+                    badge.classList.add('opacity-40');
+                    playSound('pickup');
+                });
+
+                badge.addEventListener('dragend', () => {
+                    badge.classList.remove('opacity-40');
+                });
+
+                // Tap to select (Mobile friendly)
+                badge.addEventListener('click', () => {
+                    document.querySelectorAll('.draggable-badge').forEach(b => b.classList.remove('selected-tap'));
+                    if (selectedBadgeId === item.id) {
+                        selectedBadgeId = null;
+                    } else {
+                        selectedBadgeId = item.id;
+                        badge.classList.add('selected-tap');
+                        playSound('pickup');
+                    }
+                });
+
+                pool.appendChild(badge);
+            });
+
+            // Render HD Vector Flags Grid (NO TEXT OVERLAY)
+            COUNTRIES.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-4 rounded-2xl flex flex-col items-center justify-between border border-gray-800 hover:border-gray-700 transition duration-300';
+                
+                card.innerHTML = `
+                    <div class="text-center w-full mb-3">
+                        <div class="svg-flag-box w-full h-32 rounded-xl shadow-lg border border-white/10 bg-black/40">
+                            ${SVG_FLAGS[item.id]}
+                        </div>
+                    </div>
+
+                    <div id="slot-${item.id}" data-target="${item.id}" class="drop-zone w-full py-3 px-2 rounded-xl border-2 border-dashed border-gray-700 bg-gray-950/60 flex items-center justify-center min-h-[52px] cursor-pointer">
+                        <span class="text-xs text-gray-500 font-bold">Drop Badge Here</span>
+                    </div>
+                `;
+
+                const dropZone = card.querySelector('.drop-zone');
+
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('drag-over');
+                });
+
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('drag-over');
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('drag-over');
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    handleBadgeMatch(draggedId, item.id, dropZone);
+                });
+
+                // Click drop support
+                dropZone.addEventListener('click', () => {
+                    if (selectedBadgeId) {
+                        handleBadgeMatch(selectedBadgeId, item.id, dropZone);
+                        selectedBadgeId = null;
+                    }
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        function handleBadgeMatch(draggedId, targetId, dropZone) {
+            if (dropZone.dataset.completed === 'true') return;
+
+            if (draggedId === targetId) {
+                playSound('correct');
+                dropZone.dataset.completed = 'true';
+                dropZone.classList.remove('border-dashed');
+                dropZone.classList.add('correct-drop');
+
+                const badgeElement = document.getElementById(`badge-${draggedId}`);
+                badgeElement.draggable = false;
+                badgeElement.classList.remove('selected-tap');
+                badgeElement.className = 'bg-emerald-500/20 text-emerald-300 font-black text-xs md:text-sm px-3 py-2 rounded-lg flex items-center justify-center gap-2 border border-emerald-500/40 w-full';
+                badgeElement.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${badgeElement.innerText}`;
+
+                dropZone.innerHTML = '';
+                dropZone.appendChild(badgeElement);
+
+                game1Matched++;
+                document.getElementById('g1-score').innerText = `${game1Matched} / ${COUNTRIES.length}`;
+
+                if (game1Matched === COUNTRIES.length) {
+                    setTimeout(() => {
+                        playSound('complete');
+                        switchGame(2);
+                    }, 700);
+                }
+            } else {
+                playSound('wrong');
+                dropZone.classList.add('wrong-drop');
+                setTimeout(() => dropZone.classList.remove('wrong-drop'), 400);
+            }
+        }
+
+        function resetGame1() {
+            initGame1();
+            playSound('pickup');
+        }
+
+        /* ==================== GAME 2 LOGIC ==================== */
+        function initGame2() {
+            game2Idx = 0;
+            game2Score = 0;
+            renderQuizItem();
+        }
+
+        function renderQuizItem() {
+            const q = QUIZ_QUESTIONS[game2Idx];
+
+            document.getElementById('g2-progress').innerText = `${game2Idx + 1} / ${QUIZ_QUESTIONS.length}`;
+            document.getElementById('g2-score').innerText = `${game2Score} pts`;
+
+            document.getElementById('quiz-greeting').innerText = q.greeting;
+            document.getElementById('quiz-flag-svg-box').innerHTML = SVG_FLAGS[q.id];
+            document.getElementById('quiz-country-code').innerText = q.code;
+            document.getElementById('quiz-avatar').src = q.avatar;
+            document.getElementById('quiz-name').innerText = q.name;
+            
+            document.getElementById('quiz-symbol-icon').className = `fa-solid ${q.symbolIcon}`;
+            document.getElementById('quiz-symbol-desc').innerText = q.symbolDesc;
+
+            document.getElementById('quiz-question').innerText = q.question;
+
+            // Reset feedback & next button
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.className = 'hidden p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300';
+            
+            const nextBtnContainer = document.getElementById('quiz-next-container');
+            nextBtnContainer.classList.add('hidden');
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-4 rounded-2xl bg-gray-900/90 border border-gray-800 hover:border-cyan-500 hover:bg-gray-800 transition-all font-bold text-gray-200 flex items-center justify-between group';
+                btn.innerHTML = `
+                    <span class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-xl bg-gray-800 group-hover:bg-cyan-500 text-xs flex items-center justify-center font-black text-gray-400 group-hover:text-black transition-colors">${String.fromCharCode(65 + idx)}</span>
+                        ${opt.text}
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 transition-opacity text-cyan-400"></i>
+                `;
+
+                btn.onclick = () => evaluateQuizAnswer(opt, q, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function evaluateQuizAnswer(selectedOpt, questionObj, btnElement) {
+            const optionsContainer = document.getElementById('quiz-options');
+            const allBtns = optionsContainer.querySelectorAll('button');
+            allBtns.forEach(b => b.disabled = true);
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.classList.remove('hidden');
+
+            if (selectedOpt.correct) {
+                playSound('correct');
+                game2Score += 10;
+                document.getElementById('g2-score').innerText = `${game2Score} pts`;
+
+                btnElement.className = 'w-full text-left p-4 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 font-bold text-emerald-300 flex items-center justify-between';
+                feedbackEl.className = 'p-4 rounded-2xl text-center font-bold text-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> ${questionObj.explanation}`;
+            } else {
+                playSound('wrong');
+                btnElement.className = 'w-full text-left p-4 rounded-2xl bg-rose-500/20 border-2 border-rose-500 font-bold text-rose-300 flex items-center justify-between';
+                feedbackEl.className = 'p-4 rounded-2xl text-center font-bold text-sm bg-rose-500/10 text-rose-400 border border-rose-500/30';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> ${questionObj.explanation}`;
+            }
+
+            // Show explicit NEXT button (User clicks when ready)
+            document.getElementById('quiz-next-container').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            playSound('pickup');
+            game2Idx++;
+            if (game2Idx < QUIZ_QUESTIONS.length) {
+                renderQuizItem();
+            } else {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            playSound('complete');
+            const totalMax = COUNTRIES.length + (QUIZ_QUESTIONS.length * 10);
+            const totalUser = game1Matched + game2Score;
+
+            document.getElementById('final-score').innerText = `${totalUser} pts`;
+            const accuracy = Math.round((totalUser / totalMax) * 100);
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+
+            document.getElementById('completion-modal').classList.remove('hidden');
+        }
+
+        function restartAll() {
+            document.getElementById('completion-modal').classList.add('hidden');
+            initGame1();
+            initGame2();
+            switchGame(1);
+        }
+
+        window.onload = function() {
+            initGame1();
+            initGame2();
+        };
+    </script>
+</body>
+</html>
